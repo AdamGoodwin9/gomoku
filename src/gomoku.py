@@ -85,21 +85,21 @@ class Gomoku:
             count = 1
             count += count_stones(dx, dy)
             count += count_stones(-dx, -dy)
-            
-            print(f"Checking direction ({dx}, {dy}) - count: {count}")
 
             if count >= 5:
-                print(f"Potential win found at ({x}, {y}) in direction ({dx}, {dy})")
-                if self.can_be_broken_by_capture(x, y, dx, dy):
-                    print("This win can be broken by a capture.")
-                    return False  # The win condition is blocked by a possible capture
-                else:
-                    print("This win cannot be broken by a capture.")
-                    return True
+                return True
+            # can_be_broken_by_capture does not work for shit, also subject doesn't make any sense so whatever
+                # print(f"Potential win found at ({x}, {y}) in direction ({dx}, {dy})")
+                # if self.can_be_broken_by_capture(x, y, dx, dy):
+                #     print("This win can be broken by a capture.")
+                #     return False  # The win condition is blocked by a possible capture
+                # else:
+                #     print("This win cannot be broken by a capture.")
+                #     return True
 
         return False
 
-
+    # broken logic, function currently unused
     def can_be_broken_by_capture(self, x, y, dx, dy):
         opponent = -self.current_player
         print(f"Checking if win can be broken by capture for move at ({x}, {y}) by {'Black' if self.current_player == 1 else 'White'}")
@@ -126,19 +126,6 @@ class Gomoku:
 
         print("No capture can break the alignment.")
         return False
-
-
-
-    def can_be_broken(self, x, y, dx, dy):
-        i, j = x + dx, y + dy
-        if 0 <= i < 19 and 0 <= j < 19 and self.board[i][j] == self.current_player:
-            return self.check_capture(x, y, dx, dy)
-        return False
-
-    def check_capture(self, x, y, dx, dy):
-        # Logic to check if the alignment can be broken by capture
-        pass
-
 
     def display_board(self):
         # Optional: print board to console for quick testing
