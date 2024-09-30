@@ -1,8 +1,8 @@
 # ai.py
 
 def is_there_another_in_radius(board, i, j, radius):
-    for c in range(max(i - radius, 0), min(i + radius, len(board) - 1)):
-        for r in range(max(j - radius, 0), min(j + radius, len(board[0]) - 1)):
+    for c in range(max(i - radius, 0), min(i + radius + 1, len(board))):
+        for r in range(max(j - radius, 0), min(j + radius + 1, len(board[0]))):
             if board[c][r] != 0:
                 return True
     return False
@@ -15,10 +15,10 @@ def filtered_valid_moves(board):
             if board[i][j] == 0 and is_there_another_in_radius(board, i, j, radius):  # Empty spot
                 valid_moves.append((i, j))
     if valid_moves == []:
-        if board[10][10] == 0:
-            return [(10,10)]
+        if board[9][9] == 0:
+            return [(9,9)]
         else:
-            return get_all_valid_moves_old(board)
+            print('explosion')
     
     return valid_moves
 
@@ -56,8 +56,8 @@ def minimax(board, depth, is_maximizing_player, player, alpha=float('-inf'), bet
             undo_move(board, move[0], move[1])
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
-            # if beta <= alpha:  # Prune branch
-            #     break
+            if beta <= alpha:  # Prune branch
+                break
         return max_eval
     else:
         min_eval = float('inf')
@@ -67,8 +67,8 @@ def minimax(board, depth, is_maximizing_player, player, alpha=float('-inf'), bet
             undo_move(board, move[0], move[1])
             min_eval = min(min_eval, eval)
             beta = min(beta, eval)
-            # if beta <= alpha:  # Prune branch
-            #     break
+            if beta <= alpha:  # Prune branch
+                break
         return min_eval
 
 # contender (found )
@@ -95,16 +95,15 @@ def evaluate_position(board):
 def evaluate_patterns(board, x, y, player, directions):
     score = 0
     for dx, dy in directions:
-        consecutive_stones = count_consecutive_stones(board, x, y, dx, dy, player)
-        # print(f"consec stones: {consecutive_stones} for {player}")
+        consecutive_stones, consecutive_spaces = count_consecutive_spaces_or_stones(board, x, y, dx, dy, player)
         
-        if consecutive_stones >= 5:
+        if consecutive_stones >= 5 and consecutive_stones + consecutive_spaces >= 5:
             score += 10000 * player  # Winning move
-        if consecutive_stones == 4:
+        if consecutive_stones == 4 and consecutive_stones + consecutive_spaces >= 5:
             score += 1000 * player  # Strong position
-        elif consecutive_stones == 3:
+        elif consecutive_stones == 3 and consecutive_stones + consecutive_spaces >= 5:
             score += 100 * player  # Good position
-        elif consecutive_stones == 2:
+        elif consecutive_stones == 2 and consecutive_stones + consecutive_spaces >= 5:
             score += 10 * player  # Developing position
     return score
 
@@ -118,6 +117,31 @@ def count_consecutive_stones(board, x, y, dx, dy, player):
             break
     return count
 
+def count_consecutive_spaces_or_stones(board, x, y, dx, dy, player):
+    stone_count = 0
+    open_count = 0
+    eval_forward = True
+    eval_backward = True
+    for step in range(5):
+        i, j = x + step * dx, y + step * dy
+        if eval_forward:
+            if 0 <= i < 19 and 0 <= j < 19 and board[i][j] == player:
+                stone_count += 1
+            elif 0 <= i < 19 and 0 <= j < 19 and board[i][j] == 0:
+                open_count += 1
+            else:
+                eval_forward = False
+
+        if step >= 1 and eval_backward:
+            k, l = x - step * dx, y - step * dy
+            if 0 <= k < 19 and 0 <= l < 19 and board[k][l] == player:
+                stone_count += 1
+            elif 0 <= k < 19 and 0 <= l < 19 and board[k][l] == 0:
+                open_count += 1
+            else:
+                eval_backward = False
+    return (stone_count, open_count)
+
 def game_over(board):
     # Check if any player has won
     for i in range(19):
@@ -129,7 +153,6 @@ def game_over(board):
 
     # Check if the board is full (draw)
     if all(board[i][j] != 0 for i in range(19) for j in range(19)):
-        print("its COMPLETELY joever")
         return True
     
     return False
