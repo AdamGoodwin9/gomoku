@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gomoku Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="800"></canvas>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+    
+    <div id="menu">
+        <button onclick="startGame('pvp')">Player vs Player</button>
+        <button onclick="startGame('pve_black')">Player vs AI (Black)</button>
+        <button onclick="startGame('pve_white')">Player vs AI (White)</button>
+    </div>
+    <canvas id="gameCanvas" width="800" height="800" style="display:none;"></canvas>
+
+    
+    <div id="settings" style="display:none;">
+        <button onclick="restartGame()">Restart Game</button>
+        <button onclick="backToMainMenu()">Back to Main Menu</button>
+        <button onclick="resumeGame()">Resume</button>
+    </div>
+    
+    <button id="settingsButton" onclick="toggleSettings()">Settings</button>
+    
+</body>
+</html>
