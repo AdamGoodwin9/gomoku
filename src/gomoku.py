@@ -131,6 +131,3 @@ class Gomoku:
         # Optional: print board to console for quick testing
         pass
 
-if __name__ == "__main__":
-    game = Gomoku()
-    # Implement simple loop for manual testing

@@ -5,9 +5,9 @@ const margin = 40;
 const cellSize = (canvas.width - 2 * margin) / 18;
 
 let board = null;
-let gameMode = null;
+let gameMode = "";
 let currentPlayer = 1;  // 1 for Black, -1 for White
-let aiPlayer = null;
+let aiPlayer = 0;
 
 function getFreshBoard() {
     return Array(19).fill().map(() => Array(19).fill(0));
@@ -18,14 +18,15 @@ function startGame(mode) {
     board = getFreshBoard();
     document.getElementById('menu').style.display = 'none';
     document.getElementById('gameCanvas').style.display = 'block';
+    toggleSettingsButton();
 
-    // Start the game based on the mode
-    if (gameMode === 'pvp') {
-        // PvP logic
-    } else if (gameMode === 'pve_black') {
-        // AI plays as white, player is black
-    } else if (gameMode === 'pve_white') {
-        // AI plays as black, player is white
+    if (gameMode === 'pve_white') {
+        currentPlayer = -1;  // Player is White
+        aiPlayer = 1;  // AI is Black
+        // AI makes the first move
+        let aiMove = findBestAIMove();
+        board[aiMove[0]][aiMove[1]] = aiPlayer;
+        drawBoard();
     }
 
     drawBoard();
@@ -82,8 +83,10 @@ function drawStone(x, y, color) {
 canvas.addEventListener('click', function(event) {
     const x = Math.floor((event.offsetX - margin) / cellSize);
     const y = Math.floor((event.offsetY - margin) / cellSize);
-
-    handleClick(x, y);
+    
+    if (board[x][y] === 0) {  // Only send if it's a valid move
+        socket.emit('player_move', { move: [x, y], game_mode: gameMode });
+    }
 });
 
 function handleClick(x, y) {
@@ -132,40 +135,61 @@ function handleClick(x, y) {
     }
 }
 
-function toggleSettings() {
-    const settings = document.getElementById('settings');
-    if (settings.style.display === 'none') {
-        settings.style.display = 'block';
+function toggleSettingsButton() {
+    const settingsButton = document.getElementById('settings-button');
+    if (settingsButton.style.display === 'none' || settingsButton.style.display === '') {
+        settingsButton.style.display = 'flex';
     } else {
-        settings.style.display = 'none';
+        settingsButton.style.display = 'none';
     }
 }
 
+function toggleSettingsMenu() {
+    const settingsMenu = document.getElementById('settings-menu');
+    if (settingsMenu.style.display === 'none' || settingsMenu.style.display === '') {
+        settingsMenu.style.display = 'flex';
+    } else {
+        settingsMenu.style.display = 'none';
+    }
+}
+
+// Restart the game
 function restartGame() {
-    // Reset the board and restart the game
+    // Reset the game board and variables
     board = Array(19).fill().map(() => Array(19).fill(0));
-    blackCaptures = 0;
-    whiteCaptures = 0;
+    currentPlayer = 1;
+    toggleSettingsMenu();
     drawBoard();
-    toggleSettings();  // Close the settings menu
 }
 
+// Go back to the main menu
 function backToMainMenu() {
-    // Return to the main menu
-    document.getElementById('menu').style.display = 'block';
-    document.getElementById('gameCanvas').style.display = 'none';
-    toggleSettings();
+    document.getElementById('gameCanvas').style.display = '';
+    toggleSettingsButton();
+    toggleSettingsMenu();
+    document.getElementById('menu').style.display = 'flex';  // Show main menu
 }
 
+// Resume the game by hiding the settings menu
 function resumeGame() {
-    // Simply close the settings menu and resume the game
-    toggleSettings();
+    toggleSettingsMenu();
 }
 
-// Receive AI move from the server
+// Handle board updates in PvP mode
+socket.on('board_update', function(data) {
+    board = data.board;
+    drawBoard();
+});
+
+// Handle AI move in PvE mode
 socket.on('ai_move', function(data) {
     board = data.board;
     drawBoard();
+});
+
+// Handle game over
+socket.on('game_over', function(data) {
+    alert(data.winner);
 });
 
 // Initial drawing
