@@ -1,28 +1,38 @@
+from enum import Enum
+
+class Player(Enum):
+    BLACK = 1
+    WHITE = -1
+
 class Gomoku:
     def __init__(self):
         self.board = [[0]*19 for _ in range(19)]
-        self.current_player = 1  # 1 for black, -1 for white
-        self.captures = {1: 0, -1: 0}  # Capture counts for each player
+        self.current_player = Player.BLACK
+        self.captures = {Player.BLACK: 0, Player.WHITE: 0}  # Capture counts for each player
+        self.game_over = False  # Initialize game_over flag
+        self.win_message = ""
 
     def make_move(self, x, y):
         if self.is_valid_move(x, y):
-            self.board[x][y] = self.current_player
+            self.board[x][y] = self.current_player.value
 
             # Capture opponent's stones
             captured_pairs = self.capture_stones(x, y)
             
             # Check if a player wins by capturing 10 stones
             if self.captures[self.current_player] >= 10:
-                self.win_message = f"{'Black' if self.current_player == 1 else 'White'} wins by capture!"
+                self.win_message = f"{'Black' if self.current_player == Player.BLACK else 'White'} wins by capture!"
                 self.game_over = True
                 return
 
             # Check if the move leads to a win by alignment
             if self.check_win_condition(x, y):
-                self.win_message = f"{'Black' if self.current_player == 1 else 'White'} wins!"
+                self.win_message = f"{'Black' if self.current_player == Player.BLACK else 'White'} wins!"
                 self.game_over = True
             else:
-                self.current_player *= -1  # Switch player
+                self.current_player = Player.BLACK if self.current_player == Player.WHITE else Player.WHITE
+            return True
+        return False
 
 
     def capture_stones(self, x, y):
@@ -38,9 +48,9 @@ class Gomoku:
             if not (0 <= i < 19 and 0 <= j < 19 and 0 <= i2 < 19 and 0 <= j2 < 19 and 0 <= i3 < 19 and 0 <= j3 < 19):
                 continue
 
-            if (self.board[i][j] == -self.current_player and 
-                self.board[i2][j2] == -self.current_player and 
-                self.board[i3][j3] == self.current_player):
+            if (self.board[i][j] == -self.current_player.value and 
+                self.board[i2][j2] == -self.current_player.value and 
+                self.board[i3][j3] == self.current_player.value):
 
                 captured_pairs.append((i, j))
                 captured_pairs.append((i2, j2))
@@ -66,7 +76,7 @@ class Gomoku:
 
     def would_create_double_three(self, x, y):
         # Logic to check if placing a stone creates two simultaneous free-three alignments
-        pass
+        return False
 
 
     def check_win_condition(self, x, y):

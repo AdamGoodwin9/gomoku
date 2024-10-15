@@ -1,13 +1,16 @@
 const socket = io.connect('http://' + document.domain + ':' + location.port);
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const margin = 40;
+const margin = 75;
 const cellSize = (canvas.width - 2 * margin) / 18;
 
+let blackCaptures = 0;
+let whiteCaptures = 0;
 let board = null;
-let gameMode = "";
+let gameMode = null;
 let currentPlayer = 1;  // 1 for Black, -1 for White
 let aiPlayer = 0;
+let isAiMove = false; 
 
 function getFreshBoard() {
     return Array(19).fill().map(() => Array(19).fill(0));
@@ -15,7 +18,14 @@ function getFreshBoard() {
 
 function startGame(mode) {
     gameMode = mode;
+    socket.emit('start_game', { game_mode: mode });
+}
+
+socket.on('game_started', function() {
     board = getFreshBoard();
+    currentPlayer = 1;
+    aiPlayer = 0;
+    
     document.getElementById('menu').style.display = 'none';
     document.getElementById('gameCanvas').style.display = 'block';
     toggleSettingsButton();
@@ -26,65 +36,19 @@ function startGame(mode) {
         // AI makes the first move
         let aiMove = findBestAIMove();
         board[aiMove[0]][aiMove[1]] = aiPlayer;
-        drawBoard();
     }
 
     drawBoard();
-}
-
-
-// Draw the board and pieces
-function drawBoard() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#DEB887';  // Goban color
-    ctx.fillRect(0, 0, canvas.width, canvas.height);  // Fill background with Goban color
-
-    // Draw grid lines
-    for (let i = 0; i <= 18; i++) {
-        ctx.moveTo(margin + i * cellSize, margin);
-        ctx.lineTo(margin + i * cellSize, canvas.height - margin);
-        ctx.moveTo(margin, margin + i * cellSize);
-        ctx.lineTo(canvas.width - margin, margin + i * cellSize);
-        ctx.stroke();
-    }
-
-    // Draw stones
-    for (let i = 0; i < 19; i++) {
-        for (let j = 0; j < 19; j++) {
-            if (board[i][j] == 1) {
-                drawStone(i, j, 'black');
-            } else if (board[i][j] == -1) {
-                drawStone(i, j, 'white');
-            }
-        }
-    }
-
-    drawCaptureCount(blackCaptures, whiteCaptures);
-}
-
-function drawCaptureCount(black_captures, white_captures) {
-    ctx.fillStyle = 'black';
-    ctx.font = '30px Arial';
-    ctx.fillText(black_captures, margin / 2, margin / 2);
-
-    ctx.fillStyle = 'white';
-    ctx.fillText(white_captures, canvas.width - margin / 2 - ctx.measureText(white_captures).width, margin / 2);
-}
-
-
-function drawStone(x, y, color) {
-    ctx.beginPath();
-    ctx.arc(margin + x * cellSize, margin + y * cellSize, 10, 0, 2 * Math.PI);
-    ctx.fillStyle = color;
-    ctx.fill();
-}
+});
 
 // Handle player click
 canvas.addEventListener('click', function(event) {
-    const x = Math.floor((event.offsetX - margin) / cellSize);
-    const y = Math.floor((event.offsetY - margin) / cellSize);
+    if (gameMode == "mainMenu") return;
+
+    const x = Math.floor((event.offsetX - margin + cellSize / 2) / cellSize);
+    const y = Math.floor((event.offsetY - margin + cellSize / 2) / cellSize);
     
-    if (board[x][y] === 0) {  // Only send if it's a valid move
+    if (!isAiMove && board[x][y] === 0) {  // Only send if it's a valid move
         socket.emit('player_move', { move: [x, y], game_mode: gameMode });
     }
 });
@@ -133,6 +97,55 @@ function handleClick(x, y) {
             }
         }
     }
+}
+
+// Draw the board and pieces
+function drawBoard() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#DEB887';  // Goban color
+    ctx.fillRect(0, 0, canvas.width, canvas.height);  // Fill background with Goban color
+
+    // Draw grid lines
+    for (let i = 0; i <= 18; i++) {
+        ctx.moveTo(margin + i * cellSize, margin);
+        ctx.lineTo(margin + i * cellSize, canvas.height - margin);
+        ctx.moveTo(margin, margin + i * cellSize);
+        ctx.lineTo(canvas.width - margin, margin + i * cellSize);
+        ctx.stroke();
+    }
+
+    if (gameMode != "mainMenu") {
+        // Draw stones
+        for (let i = 0; i < 19; i++) {
+            for (let j = 0; j < 19; j++) {
+                if (board[i][j] == 1) {
+                    drawStone(i, j, 'black');
+                } else if (board[i][j] == -1) {
+                    drawStone(i, j, 'white');
+                }
+            }
+        }
+
+        drawCaptureCount(blackCaptures, whiteCaptures);
+    }
+}
+
+function drawCaptureCount(blackCaptures, whiteCaptures) {
+    ctx.font = '30px Arial';
+
+    ctx.fillStyle = 'black';
+    ctx.fillText(blackCaptures, margin / 1.5, margin / 1.5);
+
+    ctx.fillStyle = 'white';
+    ctx.fillText(whiteCaptures, canvas.width - margin / 1.5 - ctx.measureText(whiteCaptures).width, margin / 1.5);
+}
+
+
+function drawStone(x, y, color) {
+    ctx.beginPath();
+    ctx.arc(margin + x * cellSize, margin + y * cellSize, 10, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.fill();
 }
 
 function toggleSettingsButton() {
