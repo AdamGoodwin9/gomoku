@@ -43,61 +43,15 @@ socket.on('game_started', function() {
 
 // Handle player click
 canvas.addEventListener('click', function(event) {
-    if (gameMode == "mainMenu") return;
+    if (board === null) return;
 
     const x = Math.floor((event.offsetX - margin + cellSize / 2) / cellSize);
     const y = Math.floor((event.offsetY - margin + cellSize / 2) / cellSize);
     
-    if (!isAiMove && board[x][y] === 0) {  // Only send if it's a valid move
-        socket.emit('player_move', { move: [x, y], game_mode: gameMode });
-    }
+    if (isAiMove || x < 0 || y < 0 || x > 18 || y > 18 || board[x][y] !== 0) return;
+    
+    socket.emit('player_move', { move: [x, y], game_mode: gameMode });
 });
-
-function handleClick(x, y) {
-    if (gameMode === 'pvp') {
-        if (board[x][y] === 0) {
-            board[x][y] = currentPlayer; //needs socket emit?
-            // socket.emit('player_move', {
-            //     board: board,
-            //     move: [x, y],
-            //     currentPlayer: currentPlayer
-            // });
-            drawBoard();
-
-            if (checkWin(x, y, currentPlayer)) {
-                alert((currentPlayer === 1 ? 'Black' : 'White') + ' wins!');
-                return;
-            }
-            currentPlayer *= -1;
-        }
-    }
-    else {
-        if (currentPlayer !== aiPlayer) { // Player's turn vs AI
-            if (board[x][y]=== 0) {
-                board[x][y] = currentPlayer; //needs socket emit?
-                drawBoard();
-
-                if (checkWin(x, y, currentPlayer)) {
-                    alert((currentPlayer === 1 ? 'Black' : 'White') + ' wins!');
-                    return;
-                }
-                
-                currentPlayer *= -1;
-
-                let aiMove = findBestAIMove();  // AI move calculation
-                board[aiMove[0]][aiMove[1]] = currentPlayer;
-                drawBoard();
-
-                if (checkWin(aiMove[0], aiMove[1], currentPlayer)) { // Check AI win
-                    alert((currentPlayer === 1 ? 'Black' : 'White') + ' wins!');
-                    return;
-                }
-
-                currentPlayer *= -1;
-            }
-        }
-    }
-}
 
 // Draw the board and pieces
 function drawBoard() {
@@ -114,7 +68,7 @@ function drawBoard() {
         ctx.stroke();
     }
 
-    if (gameMode != "mainMenu") {
+    if (board !== null) {
         // Draw stones
         for (let i = 0; i < 19; i++) {
             for (let j = 0; j < 19; j++) {
@@ -146,6 +100,7 @@ function drawStone(x, y, color) {
     ctx.arc(margin + x * cellSize, margin + y * cellSize, 10, 0, 2 * Math.PI);
     ctx.fillStyle = color;
     ctx.fill();
+    ctx.stroke();
 }
 
 function toggleSettingsButton() {
@@ -166,31 +121,50 @@ function toggleSettingsMenu() {
     }
 }
 
+function showSettingsMenu() {
+    const settingsMenu = document.getElementById('settings-menu');
+    settingsMenu.style.display = 'flex';
+}
+
+function hideSettingsMenu() {
+    const settingsMenu = document.getElementById('settings-menu');
+    settingsMenu.style.display = 'none';
+}
+
 // Restart the game
 function restartGame() {
-    // Reset the game board and variables
-    board = Array(19).fill().map(() => Array(19).fill(0));
-    currentPlayer = 1;
-    toggleSettingsMenu();
-    drawBoard();
+    socket.emit('restart_game');
+    document.getElementById('win-popup').style.display = 'none';
+    hideSettingsMenu();
 }
 
 // Go back to the main menu
 function backToMainMenu() {
+    socket.emit('end_game');
+
+    board = Array(19).fill().map(() => Array(19).fill(0));  // Clear the board
+    currentPlayer = null;  // Reset the current player
+    gameMode = null;  // Reset the game mode
+    isAiMove = false;  // Reset AI move flag
+    
     document.getElementById('gameCanvas').style.display = '';
+    document.getElementById('win-popup').style.display = 'none';
     toggleSettingsButton();
-    toggleSettingsMenu();
+    hideSettingsMenu();
     document.getElementById('menu').style.display = 'flex';  // Show main menu
+    drawBoard();
 }
 
 // Resume the game by hiding the settings menu
 function resumeGame() {
-    toggleSettingsMenu();
+    hideSettingsMenu();
 }
 
 // Handle board updates in PvP mode
 socket.on('board_update', function(data) {
     board = data.board;
+    blackCaptures = data.blackCaptures;
+    whiteCaptures = data.whiteCaptures;
     drawBoard();
 });
 
@@ -200,10 +174,20 @@ socket.on('ai_move', function(data) {
     drawBoard();
 });
 
-// Handle game over
+// Listen for 'game_over' event from the server
 socket.on('game_over', function(data) {
-    alert(data.winner);
+    showWinPopup(data.winner);
 });
+
+// Function to show the win popup
+function showWinPopup(message) {
+    // Update the win message text
+    document.getElementById('win-message').innerText = message;
+
+    // Display the win popup
+    document.getElementById('win-popup').style.display = 'flex';
+}
+
 
 // Initial drawing
 drawBoard();

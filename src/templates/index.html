@@ -12,10 +12,16 @@
         <canvas id="gameCanvas" width="800" height="800"></canvas>
 
         <!-- Gear button for settings -->
-        <div id="settings-button" onclick="toggleSettingsMenu()">
+        <div id="settings-button" onclick="toggleSettingsMenu()" class="noselect">
             ⚙️
         </div>
 
+        <div id="win-popup">
+            <h2 id="win-message"></h2>  <!-- The win message will be injected here -->
+            <button onclick="restartGame()">Restart Game</button>
+            <button onclick="backToMainMenu()">Back to Main Menu</button>
+        </div>
+        
         <!-- The settings menu -->
         <div id="settings-menu">
             <button onclick="restartGame()">Restart Game</button>

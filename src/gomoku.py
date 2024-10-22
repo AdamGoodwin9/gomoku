@@ -15,22 +15,13 @@ class Gomoku:
     def make_move(self, x, y):
         if self.is_valid_move(x, y):
             self.board[x][y] = self.current_player.value
-
-            # Capture opponent's stones
-            captured_pairs = self.capture_stones(x, y)
             
-            # Check if a player wins by capturing 10 stones
-            if self.captures[self.current_player] >= 10:
-                self.win_message = f"{'Black' if self.current_player == Player.BLACK else 'White'} wins by capture!"
-                self.game_over = True
-                return
+            self.capture_stones(x, y)
 
-            # Check if the move leads to a win by alignment
-            if self.check_win_condition(x, y):
-                self.win_message = f"{'Black' if self.current_player == Player.BLACK else 'White'} wins!"
-                self.game_over = True
-            else:
-                self.current_player = Player.BLACK if self.current_player == Player.WHITE else Player.WHITE
+            if self.check_win(x, y):
+                return True
+            
+            self.current_player = Player.BLACK if self.current_player == Player.WHITE else Player.WHITE
             return True
         return False
 
@@ -78,12 +69,17 @@ class Gomoku:
         # Logic to check if placing a stone creates two simultaneous free-three alignments
         return False
 
+    def check_capture_win(self):
+        if self.captures[self.current_player] >= 10:
+            self.win_message = f"{'Black' if self.current_player == Player.BLACK else 'White'} wins by capture!"
+            return True
+        return False
 
-    def check_win_condition(self, x, y):
+    def check_allignment_win(self, x, y):
         def count_stones(dx, dy):
             count = 0
             i, j = x + dx, y + dy
-            while 0 <= i < 19 and 0 <= j < 19 and self.board[i][j] == self.current_player:
+            while 0 <= i < 19 and 0 <= j < 19 and self.board[i][j] == self.current_player.value:
                 count += 1
                 i += dx
                 j += dy
@@ -108,6 +104,14 @@ class Gomoku:
                 #     return True
 
         return False
+
+
+    def check_win(self, x, y):
+        if self.check_capture_win() or self.check_allignment_win(x, y):
+            self.game_over = True
+            return True
+        return False
+
 
     # broken logic, function currently unused
     def can_be_broken_by_capture(self, x, y, dx, dy):
