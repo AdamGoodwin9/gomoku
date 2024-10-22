@@ -1,4 +1,3 @@
-const isGithubPages = window.location.hostname === 'your-username.github.io';
 const socket = io.connect(isGithubPages ? 'https://44.201.47.175:5000' : 'http://' + document.domain + ':' + location.port);
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
