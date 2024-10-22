@@ -40,12 +40,16 @@ socket.on('game_started', function() {
 
 // Handle player click
 canvas.addEventListener('click', function(event) {
-    if (board === null) return;
+    const menuVisible = document.getElementById('menu').style.display === 'flex';
+    const winPopupVisible = document.getElementById('win-popup').style.display === 'flex';
+    const settingsMenuVisible = document.getElementById('settings-menu').style.display === 'flex';
+
+    if (menuVisible || winPopupVisible || settingsMenuVisible || board === null || isAiMove) return;
 
     const x = Math.floor((event.offsetX - margin + cellSize / 2) / cellSize);
     const y = Math.floor((event.offsetY - margin + cellSize / 2) / cellSize);
     
-    if (isAiMove || x < 0 || y < 0 || x > 18 || y > 18 || board[x][y] !== 0) return;
+    if (x < 0 || y < 0 || x > 18 || y > 18 || board[x][y] !== 0) return;
     
     if (gameMode !== 'pvp') {
         isAiMove = true;
