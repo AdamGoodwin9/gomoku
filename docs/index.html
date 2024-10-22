@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gomoku Game</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Gomoku</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <body>
     <div id="game-container">
@@ -15,6 +16,11 @@
         <div id="settings-button" onclick="toggleSettingsMenu()" class="noselect">
             ⚙️
         </div>
+
+        <div id="spinner">
+            <div class="spinner-wheel"></div>
+        </div>
+        
 
         <div id="win-popup">
             <h2 id="win-message"></h2>  <!-- The win message will be injected here -->
@@ -38,6 +44,6 @@
     </div>
 
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+    <script src="{{ url_for('static', filename='game.js') }}"></script>
 </body>
 </html>

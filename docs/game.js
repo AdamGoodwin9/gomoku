@@ -9,7 +9,6 @@ let whiteCaptures = 0;
 let board = null;
 let gameMode = null;
 let currentPlayer = 1;  // 1 for Black, -1 for White
-let aiPlayer = 0;
 let isAiMove = false; 
 
 function getFreshBoard() {
@@ -24,18 +23,16 @@ function startGame(mode) {
 socket.on('game_started', function() {
     board = getFreshBoard();
     currentPlayer = 1;
-    aiPlayer = 0;
     
     document.getElementById('menu').style.display = 'none';
     document.getElementById('gameCanvas').style.display = 'block';
-    toggleSettingsButton();
+    showSettingsButton();
 
     if (gameMode === 'pve_white') {
         currentPlayer = -1;  // Player is White
-        aiPlayer = 1;  // AI is Black
         // AI makes the first move
-        let aiMove = findBestAIMove();
-        board[aiMove[0]][aiMove[1]] = aiPlayer;
+        isAiMove = true;
+        showSpinner();
     }
 
     drawBoard();
@@ -50,6 +47,11 @@ canvas.addEventListener('click', function(event) {
     
     if (isAiMove || x < 0 || y < 0 || x > 18 || y > 18 || board[x][y] !== 0) return;
     
+    if (gameMode !== 'pvp') {
+        isAiMove = true;
+        showSpinner();
+    }
+
     socket.emit('player_move', { move: [x, y], game_mode: gameMode });
 });
 
@@ -112,6 +114,16 @@ function toggleSettingsButton() {
     }
 }
 
+function showSettingsButton() {
+    const settingsButton = document.getElementById('settings-button');
+    settingsButton.style.display = 'flex';
+}
+
+function hideSettingsButton() {
+    const settingsButton = document.getElementById('settings-button');
+    settingsButton.style.display = 'none';
+}
+
 function toggleSettingsMenu() {
     const settingsMenu = document.getElementById('settings-menu');
     if (settingsMenu.style.display === 'none' || settingsMenu.style.display === '') {
@@ -131,14 +143,21 @@ function hideSettingsMenu() {
     settingsMenu.style.display = 'none';
 }
 
-// Restart the game
+function showSpinner() {
+    document.getElementById('spinner').style.display = 'block';
+}
+
+function hideSpinner() {
+    document.getElementById('spinner').style.display = 'none';
+}
+
 function restartGame() {
     socket.emit('restart_game');
     document.getElementById('win-popup').style.display = 'none';
     hideSettingsMenu();
+    showSettingsButton();
 }
 
-// Go back to the main menu
 function backToMainMenu() {
     socket.emit('end_game');
 
@@ -149,7 +168,7 @@ function backToMainMenu() {
     
     document.getElementById('gameCanvas').style.display = '';
     document.getElementById('win-popup').style.display = 'none';
-    toggleSettingsButton();
+    hideSettingsButton();
     hideSettingsMenu();
     document.getElementById('menu').style.display = 'flex';  // Show main menu
     drawBoard();
@@ -171,6 +190,8 @@ socket.on('board_update', function(data) {
 // Handle AI move in PvE mode
 socket.on('ai_move', function(data) {
     board = data.board;
+    isAiMove = false;
+    hideSpinner();
     drawBoard();
 });
 
@@ -186,6 +207,9 @@ function showWinPopup(message) {
 
     // Display the win popup
     document.getElementById('win-popup').style.display = 'flex';
+
+    hideSpinner();
+    hideSettingsButton();
 }
 
 

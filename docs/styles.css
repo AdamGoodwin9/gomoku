@@ -56,6 +56,32 @@ body, html {
     background-color: #8900EF;
 }
 
+/* Spinner container */
+#spinner {
+    display: none;  /* Hidden by default */
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 4;  /* Make sure it's above everything else */
+}
+
+/* Spinner styling */
+.spinner-wheel {
+    border: 6px solid #f3f3f3; /* Light grey */
+    border-top: 6px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+/* Keyframes for the spinner animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 /* Main menu (overlayed initially) */
 #menu {
     position: absolute;

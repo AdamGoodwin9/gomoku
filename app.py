@@ -3,34 +3,9 @@ from flask_socketio import SocketIO, emit
 from gomoku import Gomoku, Player  # Import the Gomoku class and Player enum
 from ai import find_best_move  # Assuming AI logic is in ai.py
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='docs', template_folder='docs')
 app.secret_key = 'gomoku_gaming_glory_goomba_guacamole'  # Simple secret key for development
 socketio = SocketIO(app)
-
-def save_game_state(game):
-    session['game_state'] = {
-        'board': game.board,
-        'current_player': game.current_player.value,  # Save enum as value
-        'captures': game.captures,
-        'game_over': game.game_over,
-        'win_message': game.win_message
-    }
-
-
-def load_game_state():
-    if 'game_state' not in session or session['game_state'] is None:
-        print("No game state in session, returning None")
-        return None
-    game_state = session['game_state']
-    game = Gomoku()
-    game.board = game_state['board']
-    game.current_player = Player(game_state['current_player'])  # Reconstruct enum
-    game.captures = game_state['captures']
-    game.game_over = game_state.get('game_over', False)
-    game.win_message = game_state.get('win_message', '')
-    return game
-
-
 
 @app.route('/')
 def index():
@@ -51,6 +26,20 @@ def start_game(data):
         'board': game.board,
         'currentPlayer': game.current_player.value
     })
+
+    if session['mode'] == 'pve_white':
+        ai_player = Player.WHITE
+        ai_move = find_best_move(game.board, ai_player.value)
+        if ai_move:
+            game.make_move(ai_move[0], ai_move[1])
+            # Save the updated game state after AI move
+            save_game_state(game)
+            # Emit the AI's move to the client
+            emit('ai_move', {
+                'board': game.board,
+                'ai_move': ai_move,
+                'currentPlayer': game.current_player.value
+            })
 
 @socketio.on('player_move')
 def handle_player_move(data):
@@ -113,6 +102,28 @@ def end_game():
     session['game_state'] = None
     session['mode'] = None
 
+def save_game_state(game):
+    session['game_state'] = {
+        'board': game.board,
+        'current_player': game.current_player.value,  # Save enum as value
+        'captures': game.captures,
+        'game_over': game.game_over,
+        'win_message': game.win_message
+    }
+
+
+def load_game_state():
+    if 'game_state' not in session or session['game_state'] is None:
+        print("No game state in session, returning None")
+        return None
+    game_state = session['game_state']
+    game = Gomoku()
+    game.board = game_state['board']
+    game.current_player = Player(game_state['current_player'])  # Reconstruct enum
+    game.captures = game_state['captures']
+    game.game_over = game_state.get('game_over', False)
+    game.win_message = game_state.get('win_message', '')
+    return game
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
