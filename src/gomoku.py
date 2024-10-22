@@ -93,6 +93,7 @@ class Gomoku:
             count += count_stones(-dx, -dy)
 
             if count >= 5:
+                self.win_message = f"{'Black' if self.current_player == Player.BLACK else 'White'} wins!"
                 return True
             # can_be_broken_by_capture does not work for shit, also subject doesn't make any sense so whatever
                 # print(f"Potential win found at ({x}, {y}) in direction ({dx}, {dy})")
