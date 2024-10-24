@@ -10,6 +10,37 @@ let board = null;
 let gameMode = null;
 let currentPlayer = 1;  // 1 for Black, -1 for White
 let isAiMove = false; 
+let aiStartTime;  // Variable to store the start time for the AI move
+let aiTimerInterval;  // Variable to store the interval for updating the display
+
+// Start the timer when the AI starts thinking
+function startAiTimer() {
+    aiStartTime = performance.now();  // More precise than Date()
+    document.getElementById('ai-timer').style.display = 'inline';  // Make the timer visible
+    
+    // Clear any existing timer interval
+    if (aiTimerInterval) {
+        clearInterval(aiTimerInterval);
+    }
+    
+    // Update the timer display every 100ms
+    aiTimerInterval = setInterval(function() {
+        const currentTime = performance.now();
+        const elapsedTime = ((currentTime - aiStartTime) / 1000).toFixed(2);  // Calculate time in seconds with two decimal places
+        document.getElementById('ai-timer').innerText = elapsedTime;
+    }, 10);  // Update every 10ms
+}
+
+// Stop the timer when the AI move is made
+function stopAiTimer() {
+    if (aiTimerInterval) {
+        clearInterval(aiTimerInterval);  // Stop updating the timer
+    }
+    
+    const aiEndTime = performance.now();
+    const totalTime = ((aiEndTime - aiStartTime) / 1000).toFixed(2);  // Total time in seconds
+    document.getElementById('ai-timer').innerText = totalTime;  // Display final time
+}
 
 function getFreshBoard() {
     return Array(19).fill().map(() => Array(19).fill(0));
@@ -32,6 +63,7 @@ socket.on('game_started', function() {
         currentPlayer = -1;  // Player is White
         // AI makes the first move
         isAiMove = true;
+        startAiTimer();
         showSpinner();
     }
 
@@ -53,6 +85,7 @@ canvas.addEventListener('click', function(event) {
     
     if (gameMode !== 'pvp') {
         isAiMove = true;
+        startAiTimer();
         showSpinner();
     }
 
@@ -195,6 +228,7 @@ socket.on('board_update', function(data) {
 socket.on('ai_move', function(data) {
     board = data.board;
     isAiMove = false;
+    stopAiTimer();
     hideSpinner();
     drawBoard();
 });

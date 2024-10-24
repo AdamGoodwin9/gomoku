@@ -1,3 +1,4 @@
+import numpy as np
 from enum import Enum
 
 class Player(Enum):
@@ -6,7 +7,7 @@ class Player(Enum):
 
 class Gomoku:
     def __init__(self):
-        self.board = [[0]*19 for _ in range(19)]
+        self.board = np.zeros((19, 19), dtype=int)
         self.current_player = Player.BLACK
         self.captures = {Player.BLACK: 0, Player.WHITE: 0}  # Capture counts for each player
         self.game_over = False  # Initialize game_over flag

@@ -1,4 +1,4 @@
-# ai.py
+import numpy as np
 
 def is_there_another_in_radius(board, i, j, radius):
     for c in range(max(i - radius, 0), min(i + radius + 1, len(board))):
@@ -29,12 +29,7 @@ def get_all_valid_moves(board):
 
 # Helper function to get all valid moves
 def get_all_valid_movesa(board):
-    valid_moves = []
-    for i in range(19):
-        for j in range(19):
-            if board[i][j] == 0:  # Empty spot
-                valid_moves.append((i, j))
-    return valid_moves
+    return list(map(tuple, np.argwhere(board == 0)))
 
 # Helper function to make a move
 def make_move(board, x, y, player):
@@ -107,29 +102,29 @@ def evaluate_patterns(board, x, y, player, directions):
         consecutive_stones, consecutive_spaces_f, consecutive_spaces_b = count_consecutive_spaces_or_stones(board, x, y, dx, dy, player)
         
         if consecutive_stones >= 5:
-            return 1000000 * player # Winning move
+            return 10000000 * player # Winning move
         
         if consecutive_stones == 4:
             if consecutive_spaces_f >= 1 and consecutive_spaces_b >= 1:
-                score += 100000 * player  # Strong position
+                score += 1000000 * player  # Strong position
             else: # maximum of one side can be free - opponent will block
-                score += 0
+                score += 5000
         elif consecutive_stones == 3:
             if consecutive_spaces_f >= 2 and consecutive_spaces_b >= 2:
-                score += 200 * player
+                score += 1000 * player
             elif   (consecutive_spaces_f >= 2 and consecutive_spaces_b == 1) \
                 or (consecutive_spaces_b >= 2 and consecutive_spaces_f == 1):
-                score += 100 * player
+                score += 500 * player
             else:
-                score += 0
+                score += 100
         elif consecutive_stones == 2:
             if consecutive_spaces_f >= 3 and consecutive_spaces_b >= 3:
-                score += 20 * player  # Developing position
+                score += 100 * player  # Developing position
             elif   (consecutive_spaces_f >= 3 and consecutive_spaces_b == 2) \
                 or (consecutive_spaces_b >= 3 and consecutive_spaces_f == 2):
-                score += 10 * player
+                score += 50 * player
             else:
-                score += 0 * player
+                score += 10 * player
     return score
 
 def count_consecutive_stones(board, x, y, dx, dy, player):
@@ -209,10 +204,14 @@ def find_best_move(board, player):
         undo_move(board, move[0], move[1])
         
         if player == 1:
+            if move_value >= 10000000:
+                return move
             if move_value > best_value:
                 best_value = move_value
                 best_move = move
         else: 
+            if move_value <= -10000000:
+                return move
             if move_value < best_value:
                 best_value = move_value
                 best_move = move

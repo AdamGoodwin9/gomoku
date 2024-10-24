@@ -23,7 +23,7 @@ def start_game(data):
     save_game_state(game)
     # Notify the client that the game has started
     emit('game_started', {
-        'board': game.board,
+        'board': game.board.tolist(),
         'currentPlayer': game.current_player.value
     })
 
@@ -36,7 +36,7 @@ def start_game(data):
             save_game_state(game)
             # Emit the AI's move to the client
             emit('ai_move', {
-                'board': game.board,
+                'board': game.board.tolist(),
                 'ai_move': ai_move,
                 'currentPlayer': game.current_player.value
             })
@@ -56,7 +56,7 @@ def handle_player_move(data):
         save_game_state(game)
         # Emit the updated board to the client
         emit('board_update', {
-            'board': game.board,
+            'board': game.board.tolist(),
             'currentPlayer': game.current_player.value,
             'blackCaptures': game.captures[Player.BLACK],
             'whiteCaptures': game.captures[Player.WHITE]
@@ -77,7 +77,7 @@ def handle_player_move(data):
                 save_game_state(game)
                 # Emit the AI's move to the client
                 emit('ai_move', {
-                    'board': game.board,
+                    'board': game.board.tolist(),
                     'ai_move': ai_move,
                     'currentPlayer': game.current_player.value
                 })
@@ -91,7 +91,7 @@ def restart_game():
     game = Gomoku()
     save_game_state(game)
     emit('board_update', {
-        'board': game.board,
+        'board': game.board.tolist(),
         'currentPlayer': game.current_player.value,
         'blackCaptures': game.captures[Player.BLACK],
         'whiteCaptures': game.captures[Player.WHITE]
@@ -106,7 +106,7 @@ def restart_game():
             save_game_state(game)
             # Emit the AI's move to the client
             emit('ai_move', {
-                'board': game.board,
+                'board': game.board.tolist(),
                 'ai_move': ai_move,
                 'currentPlayer': game.current_player.value
             })
