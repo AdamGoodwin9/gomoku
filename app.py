@@ -97,6 +97,20 @@ def restart_game():
         'whiteCaptures': game.captures[Player.WHITE]
     })
 
+    if session['mode'] == 'pve_white':
+        ai_player = Player.WHITE
+        ai_move = find_best_move(game.board, ai_player.value)
+        if ai_move:
+            game.make_move(ai_move[0], ai_move[1])
+            # Save the updated game state after AI move
+            save_game_state(game)
+            # Emit the AI's move to the client
+            emit('ai_move', {
+                'board': game.board,
+                'ai_move': ai_move,
+                'currentPlayer': game.current_player.value
+            })
+
 @socketio.on('end_game')
 def end_game():
     session['game_state'] = None
