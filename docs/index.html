@@ -5,26 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gomoku</title>
 
-    <script>
-        var isGithubPages = window.location.hostname === 'adamgoodwin9.github.io';
-
-        // CSS path
-        var stylesheet = document.createElement('link');
-        stylesheet.rel = 'stylesheet';
-        stylesheet.href = isGithubPages ? 'styles.css' : '{{ url_for("static", filename="styles.css") }}';
-        document.head.appendChild(stylesheet);
-
-        // favicon path
-        var favicon = document.createElement('link');
-        favicon.rel = 'icon';
-        favicon.href = isGithubPages ? 'favicon.ico' : '{{ url_for("static", filename="favicon.ico") }}';
-        document.head.appendChild(favicon);
-
-        // game.js path
-        var script = document.createElement('script');
-        script.src = isGithubPages ? 'game.js' : '{{ url_for("static", filename="game.js") }}';
-        document.head.appendChild(script);
-    </script>
+    <link rel="stylesheet" href="docs/styles.css">
+    <link rel="icon" href="docs/favicon.ico">
 </head>
 <body>
     <div id="game-container">
@@ -63,5 +45,6 @@
     </div>
 
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="docs/game.js"></script>
 </body>
 </html>

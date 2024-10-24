@@ -45,12 +45,17 @@ def undo_move(board, x, y):
     board[x][y] = 0  # Reset the position to empty
 
 def minimax(board, depth, is_maximizing_player, player, alpha=float('-inf'), beta=float('inf')):
+    #define function here: func(board, depth, is_maximizing_player, player, alpha=float('-inf'), beta=float('inf'))
     if depth == 0 or game_over(board):
         return evaluate_position(board)  # Evaluate the board state if depth is 0 or game ends
     
+#define dictionary: key = move, value = eval
+
     if is_maximizing_player:
         max_eval = float('-inf')
         for move in get_all_valid_moves(board):
+            #spawn thread 
+            #wrap all this in a function, Thread(target=thatFunc, args=tuple of move -> eval)
             make_move(board, move[0], move[1], player)
             eval = minimax(board, depth - 1, False, -player, alpha, beta)  # Recurse for the opponent
             undo_move(board, move[0], move[1])
@@ -58,6 +63,9 @@ def minimax(board, depth, is_maximizing_player, player, alpha=float('-inf'), bet
             alpha = max(alpha, eval)
             if beta <= alpha:  # Prune branch
                 break
+            #kill thread
+            #threads will be adding move-eval pairs to the dictionary
+        #return max(dictionary.values())
         return max_eval
     else:
         min_eval = float('inf')
@@ -87,6 +95,7 @@ def evaluate_position(board):
     for i in range(19):
         for j in range(19):
             if board[i][j] != 0:  # Only evaluate if there's a stone here
+                #spawn thread for next two lines
                 player = board[i][j]  # 1 for AI, -1 for opponent
                 score += evaluate_patterns(board, i, j, player, directions)
     
@@ -95,16 +104,32 @@ def evaluate_position(board):
 def evaluate_patterns(board, x, y, player, directions):
     score = 0
     for dx, dy in directions:
-        consecutive_stones, consecutive_spaces = count_consecutive_spaces_or_stones(board, x, y, dx, dy, player)
+        consecutive_stones, consecutive_spaces_f, consecutive_spaces_b = count_consecutive_spaces_or_stones(board, x, y, dx, dy, player)
         
-        if consecutive_stones >= 5 and consecutive_stones + consecutive_spaces >= 5:
-            score += 10000 * player  # Winning move
-        if consecutive_stones == 4 and consecutive_stones + consecutive_spaces >= 5:
-            score += 1000 * player  # Strong position
-        elif consecutive_stones == 3 and consecutive_stones + consecutive_spaces >= 5:
-            score += 100 * player  # Good position
-        elif consecutive_stones == 2 and consecutive_stones + consecutive_spaces >= 5:
-            score += 10 * player  # Developing position
+        if consecutive_stones >= 5:
+            return 1000000 * player # Winning move
+        
+        if consecutive_stones == 4:
+            if consecutive_spaces_f >= 1 and consecutive_spaces_b >= 1:
+                score += 100000 * player  # Strong position
+            else: # maximum of one side can be free - opponent will block
+                score += 0
+        elif consecutive_stones == 3:
+            if consecutive_spaces_f >= 2 and consecutive_spaces_b >= 2:
+                score += 200 * player
+            elif   (consecutive_spaces_f >= 2 and consecutive_spaces_b == 1) \
+                or (consecutive_spaces_b >= 2 and consecutive_spaces_f == 1):
+                score += 100 * player
+            else:
+                score += 0
+        elif consecutive_stones == 2:
+            if consecutive_spaces_f >= 3 and consecutive_spaces_b >= 3:
+                score += 20 * player  # Developing position
+            elif   (consecutive_spaces_f >= 3 and consecutive_spaces_b == 2) \
+                or (consecutive_spaces_b >= 3 and consecutive_spaces_f == 2):
+                score += 10 * player
+            else:
+                score += 0 * player
     return score
 
 def count_consecutive_stones(board, x, y, dx, dy, player):
@@ -119,7 +144,8 @@ def count_consecutive_stones(board, x, y, dx, dy, player):
 
 def count_consecutive_spaces_or_stones(board, x, y, dx, dy, player):
     stone_count = 0
-    open_count = 0
+    open_count_forward = 0
+    open_count_backward = 0
     eval_forward = True
     eval_backward = True
     for step in range(5):
@@ -128,7 +154,7 @@ def count_consecutive_spaces_or_stones(board, x, y, dx, dy, player):
             if 0 <= i < 19 and 0 <= j < 19 and board[i][j] == player:
                 stone_count += 1
             elif 0 <= i < 19 and 0 <= j < 19 and board[i][j] == 0:
-                open_count += 1
+                open_count_forward += 1
             else:
                 eval_forward = False
 
@@ -137,10 +163,10 @@ def count_consecutive_spaces_or_stones(board, x, y, dx, dy, player):
             if 0 <= k < 19 and 0 <= l < 19 and board[k][l] == player:
                 stone_count += 1
             elif 0 <= k < 19 and 0 <= l < 19 and board[k][l] == 0:
-                open_count += 1
+                open_count_backward += 1
             else:
                 eval_backward = False
-    return (stone_count, open_count)
+    return (stone_count, open_count_forward, open_count_backward)
 
 def game_over(board):
     # Check if any player has won
